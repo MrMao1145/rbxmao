@@ -28,3 +28,14 @@ jobs:
         with:
           name: app-debug
           path: app/build/outputs/apk/debug/app-debug.apk  # 路径根据项目调整
+      - name: Build Release APK
+  run: |
+    # 解码密钥
+    echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/my-key.jks
+    # 写入 gradle.properties
+    echo "RELEASE_STORE_FILE=my-key.jks" >> gradle.properties
+    echo "RELEASE_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> gradle.properties
+    echo "RELEASE_KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> gradle.properties
+    echo "RELEASE_KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> gradle.properties
+    # 构建
+    ./gradlew assembleRelease
