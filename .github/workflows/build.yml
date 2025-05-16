@@ -1,48 +1,39 @@
-name: RBXMAO Build
+name: RBXMAO CI
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+    paths:
+      - 'app/**'
+      - '.github/workflows/build.yml'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up JDK
-        uses: actions/setup-java@v3
+      - name: Cache Gradle
+        uses: actions/cache@v3
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
 
-      - name: Build Debug APK
+      - uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Build Debug
         run: ./gradlew assembleDebug
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v3
+        if: success()
         with:
           name: app-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
-
-      - name: Build Release APK
-        run: |
-          # 解码密钥
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/my-key.jks
-          # 写入 gradle.properties
-          echo "RELEASE_STORE_FILE=my-key.jks" >> gradle.properties
-          echo "RELEASE_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> gradle.properties
-          echo "RELEASE_KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> gradle.properties
-          echo "RELEASE_KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> gradle.properties
-          # 构建
-          ./gradlew assembleRelease
-
-      - name: Upload Release APK
-        uses: actions/upload-artifact@v3
-        with:
-          name: app-release
-          path: app/build/outputs/apk/release/app-release.apk
+          path: app/build/outputs/apk/debug/*.apk
