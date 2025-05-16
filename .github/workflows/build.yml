@@ -33,7 +33,7 @@ jobs:
         run: ./gradlew assembleDebug
 
       - name: Upload Debug APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3.1.2  # 精确到补丁版本
         if: success()
         with:
           name: app-debug
